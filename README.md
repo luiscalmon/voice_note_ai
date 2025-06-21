@@ -1,6 +1,6 @@
-# VoiceNote AI
+# Voice Note AI
 
-This repository contains the Flutter project for **VoiceNote AI**. The app uses Material Design and supports both light and dark themes.
+This repository contains the Flutter project for **Voice Note AI**. The app uses Material Design and supports both light and dark themes.
 
 ## Getting Started
 

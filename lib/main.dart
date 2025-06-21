@@ -22,7 +22,7 @@ class VoiceNoteApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => NotesProvider(),
       child: MaterialApp(
-        title: 'VoiceNote AI',
+        title: 'Voice Note AI',
         theme: ThemeData(
           brightness: Brightness.light,
           useMaterial3: true,

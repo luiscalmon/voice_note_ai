@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final notes = context.watch<NotesProvider>().notes;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('VoiceNote AI'),
+        title: const Text('Voice Note AI'),
       ),
       body: Column(
         children: [
