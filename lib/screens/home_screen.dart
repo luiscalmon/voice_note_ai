@@ -18,11 +18,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isListening = false;
   String _recognizedText = '';
   bool _isProcessingFinal = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _speechService = SpeechService(onFinal: _handleFinalSpeech);
+    _speechService = SpeechService(
+      onFinal: _handleFinalSpeech,
+      onError: _handleError,
+    );
     _initialize();
   }
 
@@ -34,6 +38,16 @@ class _HomeScreenState extends State<HomeScreen> {
     _processFinalSpeech(text);
   }
 
+  void _handleError(String message) {
+    setState(() {
+      _errorMessage = message;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   Future<void> _processFinalSpeech(String text) async {
     if (_isProcessingFinal) return;
     _isProcessingFinal = true;
@@ -41,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isListening = false;
       _recognizedText = '';
+      _errorMessage = null;
     });
 
     if (text.isEmpty) {
@@ -69,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isListening = true;
       _recognizedText = '';
+      _errorMessage = null;
     });
     _speechService.startListening(onResult: (words) {
       setState(() {
@@ -91,6 +107,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           if (_recognizedText.isNotEmpty || _isListening)
             Padding(
               padding: const EdgeInsets.all(16.0),
