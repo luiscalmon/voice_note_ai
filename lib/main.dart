@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 
 import 'models/note.dart';
+import 'providers/notes_provider.dart';
+import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,33 +19,20 @@ class VoiceNoteApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'VoiceNote AI',
-      theme: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: true,
-      ),
-      themeMode: ThemeMode.system,
-      home: const HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('VoiceNote AI'),
-      ),
-      body: const Center(
-        child: Text('Welcome to VoiceNote AI!'),
+    return ChangeNotifierProvider(
+      create: (_) => NotesProvider(),
+      child: MaterialApp(
+        title: 'VoiceNote AI',
+        theme: ThemeData(
+          brightness: Brightness.light,
+          useMaterial3: true,
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          useMaterial3: true,
+        ),
+        themeMode: ThemeMode.system,
+        home: const HomeScreen(),
       ),
     );
   }
