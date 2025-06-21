@@ -16,6 +16,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late final SpeechService _speechService;
   bool _isListening = false;
+  String _recognizedText = '';
+  bool _isProcessingFinal = false;
 
   @override
   void initState() {
@@ -33,12 +35,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _processFinalSpeech(String text) async {
+    if (_isProcessingFinal) return;
+    _isProcessingFinal = true;
     await _speechService.stopListening();
     setState(() {
       _isListening = false;
+      _recognizedText = '';
     });
 
-    if (text.isEmpty) return;
+    if (text.isEmpty) {
+      _isProcessingFinal = false;
+      return;
+    }
 
     final note = Note(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -53,14 +61,25 @@ class _HomeScreenState extends State<HomeScreen> {
         const SnackBar(content: Text('Note saved')),
       );
     }
+    _isProcessingFinal = false;
   }
 
   void _startListening() {
     if (_isListening) return;
-    _speechService.startListening();
     setState(() {
       _isListening = true;
+      _recognizedText = '';
     });
+    _speechService.startListening(onResult: (words) {
+      setState(() {
+        _recognizedText = words;
+      });
+    });
+  }
+
+  void _stopListening() {
+    if (!_isListening) return;
+    _processFinalSpeech(_recognizedText);
   }
 
   @override
@@ -70,28 +89,41 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('VoiceNote AI'),
       ),
-      body: ListView.builder(
-        itemCount: notes.length,
-        itemBuilder: (context, index) {
-          final note = notes[index];
-          return ListTile(
-            title: Text(note.text),
-            subtitle: Text(
-              '${note.createdAt}',
+      body: Column(
+        children: [
+          if (_recognizedText.isNotEmpty || _isListening)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(_recognizedText),
             ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => NoteDetailScreen(note: note),
-                ),
-              );
-            },
-          );
-        },
+          Expanded(
+            child: ListView.builder(
+              itemCount: notes.length,
+              itemBuilder: (context, index) {
+                final note = notes[index];
+                return ListTile(
+                  title: Text(note.text),
+                  subtitle: Text(
+                    '${note.createdAt}',
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => NoteDetailScreen(note: note),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _startListening,
-        child: Icon(_isListening ? Icons.mic_off : Icons.mic),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isListening ? _stopListening : _startListening,
+        label: Text(
+          _isListening ? '⏹️ Stop Listening' : '🎙️ Start Listening',
+        ),
       ),
     );
   }
