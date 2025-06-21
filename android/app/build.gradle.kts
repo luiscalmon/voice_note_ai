@@ -5,6 +5,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystoreProperties = Properties().apply {
+    val keystoreFile = rootProject.file("key.properties")
+    if (keystoreFile.exists()) {
+        load(FileInputStream(keystoreFile))
+    } else {
+        throw GradleException("🔐 key.properties file not found at rootProject.")
+    }
+}
+
 android {
     namespace = "com.lach.voice_note_ai"
     compileSdk = flutter.compileSdkVersion
@@ -30,11 +43,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"]?.toString()
+                ?: throw GradleException("Missing keyAlias in key.properties")
+            keyPassword = keystoreProperties["keyPassword"]?.toString()
+                ?: throw GradleException("Missing keyPassword in key.properties")
+            storeFile = file(keystoreProperties["storeFile"]?.toString()
+                ?: throw GradleException("Missing storeFile in key.properties"))
+            storePassword = keystoreProperties["storePassword"]?.toString()
+                ?: throw GradleException("Missing storePassword in key.properties")
+        }
+    }
+
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
