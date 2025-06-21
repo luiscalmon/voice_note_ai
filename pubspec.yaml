@@ -25,5 +25,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  flutter_launcher_icons: ^0.14.4
+
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/voice_note_ai_icon.png"
+
 flutter:
   uses-material-design: true
