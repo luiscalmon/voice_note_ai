@@ -1,0 +1,158 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/note.dart';
+import '../providers/notes_provider.dart';
+import '../services/speech_service.dart';
+import 'note_detail_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final SpeechService _speechService;
+  bool _isListening = false;
+  String _recognizedText = '';
+  bool _isProcessingFinal = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _speechService = SpeechService(
+      onFinal: _handleFinalSpeech,
+      onError: _handleError,
+    );
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _speechService.initialize();
+  }
+
+  void _handleFinalSpeech(String text) {
+    _processFinalSpeech(text);
+  }
+
+  void _handleError(String message) {
+    setState(() {
+      _errorMessage = message;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> _processFinalSpeech(String text) async {
+    if (_isProcessingFinal) return;
+    _isProcessingFinal = true;
+    await _speechService.stopListening();
+    setState(() {
+      _isListening = false;
+      _recognizedText = '';
+      _errorMessage = null;
+    });
+
+    if (text.isEmpty) {
+      _isProcessingFinal = false;
+      return;
+    }
+
+    final note = Note(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      createdAt: DateTime.now(),
+    );
+
+    await context.read<NotesProvider>().addNote(note);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note saved')),
+      );
+    }
+    _isProcessingFinal = false;
+  }
+
+  void _startListening() {
+    if (_isListening) return;
+    setState(() {
+      _isListening = true;
+      _recognizedText = '';
+      _errorMessage = null;
+    });
+    _speechService.startListening(onResult: (words) {
+      setState(() {
+        _recognizedText = words;
+      });
+    });
+  }
+
+  void _stopListening() {
+    if (!_isListening) return;
+    _processFinalSpeech(_recognizedText);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final notes = context.watch<NotesProvider>().notes;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Voice Note AI'),
+      ),
+      body: Column(
+        children: [
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          if (_recognizedText.isNotEmpty || _isListening)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(_recognizedText),
+            ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: notes.length,
+              itemBuilder: (context, index) {
+                final note = notes[index];
+                return ListTile(
+                  title: Text(
+                    note.text,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    '${note.createdAt}',
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => NoteDetailScreen(note: note),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isListening ? _stopListening : _startListening,
+        label: Text(
+          _isListening ? '⏹️ Stop Listening' : '🎙️ Start Listening',
+        ),
+      ),
+    );
+  }
+}
