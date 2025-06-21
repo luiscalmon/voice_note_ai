@@ -17,7 +17,8 @@ class NotesProvider extends ChangeNotifier {
   List<Note> get notes => List.unmodifiable(_notes);
 
   void _loadNotes() {
-    _notes = _notesBox.values.toList();
+    _notes = _notesBox.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     notifyListeners();
   }
 
