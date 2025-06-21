@@ -126,7 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 final note = notes[index];
                 return ListTile(
-                  title: Text(note.text),
+                  title: Text(
+                    note.text,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   subtitle: Text(
                     '${note.createdAt}',
                   ),
