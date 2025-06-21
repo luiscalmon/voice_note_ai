@@ -1,11 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/note.dart';
 import '../providers/notes_provider.dart';
+import '../services/speech_service.dart';
 import 'note_detail_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final SpeechService _speechService;
+  bool _isListening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _speechService = SpeechService(onFinal: _handleFinalSpeech);
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _speechService.initialize();
+  }
+
+  void _handleFinalSpeech(String text) {
+    _processFinalSpeech(text);
+  }
+
+  Future<void> _processFinalSpeech(String text) async {
+    await _speechService.stopListening();
+    setState(() {
+      _isListening = false;
+    });
+
+    if (text.isEmpty) return;
+
+    final note = Note(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      createdAt: DateTime.now(),
+    );
+
+    await context.read<NotesProvider>().addNote(note);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note saved')),
+      );
+    }
+  }
+
+  void _startListening() {
+    if (_isListening) return;
+    _speechService.startListening();
+    setState(() {
+      _isListening = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +90,8 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Start recording action
-        },
-        child: const Icon(Icons.mic),
+        onPressed: _startListening,
+        child: Icon(_isListening ? Icons.mic_off : Icons.mic),
       ),
     );
   }
