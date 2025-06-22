@@ -1,12 +1,5 @@
 # Voice Note AI
 
-This repository contains the Flutter project for **Voice Note AI**. The app uses Material Design and supports both light and dark themes.
+Voice Note AI is a simple Flutter application that lets you record voice notes and automatically transcribe them into text. Voice recognition is powered by AI thanks to advanced speech recognition technology available in your device's operating system. Manage your notes easily with a clean material design interface.
 
-## Getting Started
-
-To run the app, ensure you have the Flutter SDK installed. Then execute:
-
-```bash
-flutter pub get
-flutter run
-```
+This project serves as a proof of concept developed entirely using OpenAI Codex.
